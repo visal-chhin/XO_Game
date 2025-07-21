@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>XO Game</title>
+  <link rel="icon" href="asset/img/logo.png">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      background: #f0f0f0;
+      margin: 0;
+      
+    }
+    .game {
+      text-align: center;
+    }
+    .board {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      gap: 5px;
+      margin: 20px auto;
+    }
+    .cell {
+      width: 100px;
+      height: 100px;
+      background: white;
+      border: 2px solid #333;
+      font-size: 2.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      cursor: pointer;
+      transition: background 0.3s;
+      font-weight: bold;
+    }
+    .cell:hover {
+      background: #ddd;
+    }
+    .cell.x {
+      color: blue;
+    }
+    .cell.o {
+      color: red;
+    }
+    .winner {
+      font-size: 1.5rem;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+    .winner img {
+      width: 100px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="game">
+    <h1 >XO Game</h1>
+    <div class="board" id="board">
+      <div class="cell" data-index="0"></div>
+      <div class="cell" data-index="1"></div>
+      <div class="cell" data-index="2"></div>
+      <div class="cell" data-index="3"></div>
+      <div class="cell" data-index="4"></div>
+      <div class="cell" data-index="5"></div>
+      <div class="cell" data-index="6"></div>
+      <div class="cell" data-index="7"></div>
+      <div class="cell" data-index="8"></div>
+    </div>
+    <div class="winner" id="winner"></div>
+    <h4 style="color: blue;"> X = color blue 🟦</h4>
+    <h4 style="color: red;"> O = color Red 🔴</h4>
+  </div>
+
+  <script>
+    const board = document.querySelectorAll('.cell');
+    const winnerText = document.getElementById('winner');
+    let currentPlayer = 'X';
+    let gameActive = true;
+    let gameState = ["", "", "", "", "", "", "", "", ""];
+
+    const winningConditions = [
+      [0, 1, 2],
+      [3, 4, 5],
+      [6, 7, 8],
+      [0, 3, 6],
+      [1, 4, 7],
+      [2, 5, 8],
+      [0, 4, 8],
+      [2, 4, 6]
+    ];
+
+
+    function handleClick(e) {
+      const cell = e.target;
+      const index = cell.dataset.index;
+      if (gameState[index] !== "" || !gameActive) return;
+      gameState[index] = currentPlayer;
+      cell.textContent = currentPlayer;
+      cell.classList.add(currentPlayer.toLowerCase());
+      checkWinner();
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+    }
+
+    function checkWinner() {
+      let roundWon = false;
+      for (let i = 0; i < winningConditions.length; i++) {
+        const [a, b, c] = winningConditions[i];
+        if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
+          roundWon = true;
+          break;
+        }
+      }
+      if (roundWon) {
+        winnerText.innerHTML = `${currentPlayer} Wins! <br><img src="asset/img/champion.jpg" alt="win">`;
+        gameActive = false;
+        setTimeout(resetGame, 3000); // Auto restart after 3 seconds
+        return;
+      }
+      if (!gameState.includes("")) {
+        winnerText.innerHTML = `It's a Draw! <br><img src="asset/img/try.png" alt="draw">`;
+        gameActive = false;
+        setTimeout(resetGame, 3000);
+      }
+    }
+
+    function resetGame() {
+      gameState = ["", "", "", "", "", "", "", "", ""];
+      board.forEach(cell => {
+        cell.textContent = "";
+        cell.classList.remove('x', 'o');
+      });
+      currentPlayer = 'X';
+      gameActive = true;
+      winnerText.innerHTML = "";
+    }
+
+    board.forEach(cell => cell.addEventListener('click', handleClick));
+  </script>
+</body>
+</html>
