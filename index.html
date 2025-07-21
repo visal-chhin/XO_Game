@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>XO Game</title>
+  <title>XO Game with AI</title>
   <link rel="icon" href="asset/img/logo.png">
   <style>
     body {
@@ -14,7 +14,6 @@
       height: 100vh;
       background: #f0f0f0;
       margin: 0;
-      
     }
     .game {
       text-align: center;
@@ -60,7 +59,7 @@
 </head>
 <body>
   <div class="game">
-    <h1 >XO Game</h1>
+    <h1>XO Game (You = X)</h1>
     <div class="board" id="board">
       <div class="cell" data-index="0"></div>
       <div class="cell" data-index="1"></div>
@@ -73,14 +72,14 @@
       <div class="cell" data-index="8"></div>
     </div>
     <div class="winner" id="winner"></div>
-    <h4 style="color: blue;"> X = color blue 🟦</h4>
-    <h4 style="color: red;"> O = color Red 🔴</h4>
+    <h4 style="color: blue;">X = You 🟦</h4>
+    <h4 style="color: red;">O = AI 🔴</h4>
   </div>
 
   <script>
     const board = document.querySelectorAll('.cell');
     const winnerText = document.getElementById('winner');
-    let currentPlayer = 'X';
+    let currentPlayer = 'X'; // Player always starts with X
     let gameActive = true;
     let gameState = ["", "", "", "", "", "", "", "", ""];
 
@@ -95,16 +94,40 @@
       [2, 4, 6]
     ];
 
-
     function handleClick(e) {
       const cell = e.target;
       const index = cell.dataset.index;
       if (gameState[index] !== "" || !gameActive) return;
-      gameState[index] = currentPlayer;
-      cell.textContent = currentPlayer;
-      cell.classList.add(currentPlayer.toLowerCase());
+
+      // Player (X) move
+      gameState[index] = 'X';
+      cell.textContent = 'X';
+      cell.classList.add('x');
       checkWinner();
-      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+
+      if (gameActive) {
+        // AI makes a move after 0.5s delay
+        setTimeout(aiMove, 500);
+      }
+    }
+
+    function aiMove() {
+      // Find all empty cells
+      const emptyCells = [];
+      gameState.forEach((val, idx) => {
+        if (val === "") emptyCells.push(idx);
+      });
+
+      if (emptyCells.length === 0) return;
+
+      // AI chooses a random empty cell
+      const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+      const aiCell = board[randomIndex];
+
+      gameState[randomIndex] = 'O';
+      aiCell.textContent = 'O';
+      aiCell.classList.add('o');
+      checkWinner();
     }
 
     function checkWinner() {
@@ -116,17 +139,21 @@
           break;
         }
       }
+
       if (roundWon) {
         winnerText.innerHTML = `${currentPlayer} Wins! <br><img src="asset/img/champion.jpg" alt="win">`;
         gameActive = false;
-        setTimeout(resetGame, 3000); // Auto restart after 3 seconds
+        setTimeout(resetGame, 3000); 
         return;
       }
+
       if (!gameState.includes("")) {
         winnerText.innerHTML = `It's a Draw! <br><img src="asset/img/try.png" alt="draw">`;
         gameActive = false;
         setTimeout(resetGame, 3000);
       }
+
+      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
     }
 
     function resetGame() {
