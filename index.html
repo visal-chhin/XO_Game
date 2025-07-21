@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>XO Game with AI</title>
+  <title>XO Game with Unbeatable AI</title>
   <link rel="icon" href="asset/img/logo.png">
   <style>
     body {
@@ -97,12 +97,10 @@
     function handleClick(e) {
       const cell = e.target;
       const index = cell.dataset.index;
-      if (gameState[index] !== "" || !gameActive) return;
+      if (gameState[index] !== "" || !gameActive || currentPlayer !== 'X') return;
 
       // Player (X) move
-      gameState[index] = 'X';
-      cell.textContent = 'X';
-      cell.classList.add('x');
+      makeMove(index, 'X');
       checkWinner();
 
       if (gameActive) {
@@ -111,39 +109,102 @@
       }
     }
 
+    function makeMove(index, player) {
+      gameState[index] = player;
+      board[index].textContent = player;
+      board[index].classList.add(player === 'X' ? 'x' : 'o');
+      currentPlayer = player === 'X' ? 'O' : 'X';
+    }
+
     function aiMove() {
-      // Find all empty cells
-      const emptyCells = [];
-      gameState.forEach((val, idx) => {
-        if (val === "") emptyCells.push(idx);
-      });
+      if (!gameActive || currentPlayer !== 'O') return;
 
-      if (emptyCells.length === 0) return;
-
-      // AI chooses a random empty cell
-      const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-      const aiCell = board[randomIndex];
-
-      gameState[randomIndex] = 'O';
-      aiCell.textContent = 'O';
-      aiCell.classList.add('o');
+      // Find the absolute best move using Minimax algorithm
+      const bestMove = minimax(gameState, 'O').index;
+      
+      makeMove(bestMove, 'O');
       checkWinner();
     }
 
-    function checkWinner() {
-      let roundWon = false;
-      for (let i = 0; i < winningConditions.length; i++) {
-        const [a, b, c] = winningConditions[i];
-        if (gameState[a] && gameState[a] === gameState[b] && gameState[a] === gameState[c]) {
-          roundWon = true;
-          break;
+    // Minimax algorithm for perfect AI
+    function minimax(newBoard, player) {
+      const availableSpots = emptyIndices(newBoard);
+
+      // Check for terminal states
+      if (checkWinForPlayer(newBoard, 'X')) {
+        return {score: -10};
+      } else if (checkWinForPlayer(newBoard, 'O')) {
+        return {score: 10};
+      } else if (availableSpots.length === 0) {
+        return {score: 0};
+      }
+
+      const moves = [];
+      for (let i = 0; i < availableSpots.length; i++) {
+        const move = {};
+        move.index = availableSpots[i];
+        newBoard[availableSpots[i]] = player;
+
+        if (player === 'O') {
+          const result = minimax(newBoard, 'X');
+          move.score = result.score;
+        } else {
+          const result = minimax(newBoard, 'O');
+          move.score = result.score;
+        }
+
+        newBoard[availableSpots[i]] = '';
+        moves.push(move);
+      }
+
+      let bestMove;
+      if (player === 'O') {
+        let bestScore = -Infinity;
+        for (let i = 0; i < moves.length; i++) {
+          if (moves[i].score > bestScore) {
+            bestScore = moves[i].score;
+            bestMove = i;
+          }
+        }
+      } else {
+        let bestScore = Infinity;
+        for (let i = 0; i < moves.length; i++) {
+          if (moves[i].score < bestScore) {
+            bestScore = moves[i].score;
+            bestMove = i;
+          }
         }
       }
 
-      if (roundWon) {
-        winnerText.innerHTML = `${currentPlayer} Wins! <br><img src="asset/img/champion.jpg" alt="win">`;
+      return moves[bestMove];
+    }
+
+    function emptyIndices(board) {
+      return board.map((spot, index) => spot === '' ? index : '').filter(String);
+    }
+
+    function checkWinForPlayer(board, player) {
+      for (let i = 0; i < winningConditions.length; i++) {
+        const [a, b, c] = winningConditions[i];
+        if (board[a] === player && board[b] === player && board[c] === player) {
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function checkWinner() {
+      if (checkWinForPlayer(gameState, 'X')) {
+        winnerText.innerHTML = `X Wins! <br><img src="asset/img/champion.jpg" alt="win">`;
         gameActive = false;
-        setTimeout(resetGame, 3000); 
+        setTimeout(resetGame, 3000);
+        return;
+      }
+
+      if (checkWinForPlayer(gameState, 'O')) {
+        winnerText.innerHTML = `O Wins! <br><img src="asset/img/champion.jpg" alt="win">`;
+        gameActive = false;
+        setTimeout(resetGame, 3000);
         return;
       }
 
@@ -152,8 +213,6 @@
         gameActive = false;
         setTimeout(resetGame, 3000);
       }
-
-      currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
     }
 
     function resetGame() {
